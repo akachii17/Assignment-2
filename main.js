@@ -24,7 +24,7 @@ var directionalLight;
 var nodes = [];
 var edges = [];
 var angleMultiplier = 30;
-var level = 5;
+var level = 2;
  
 
 function main(){
