@@ -10,6 +10,6 @@ body {
   padding: 0;
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(white, aqua);
+  background: linear-gradient(rgb(17, 90, 206), rgb(0, 72, 255));
   overflow: hidden;
 }

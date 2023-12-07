@@ -46,7 +46,7 @@ function main(){
   camera.position.set(10, 10, 10)
 
   //LIGHTINGS
-  ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+  ambientLight = new THREE.AmbientLight(0xffffff, 3);
   scene.add(ambientLight);
 
   directionalLight = new THREE.DirectionalLight( 0xffffff, 1);
@@ -324,7 +324,7 @@ function calculateSnowflakeMainArms() {
 
   //Create the shape for the node
   var nodeGeometry = new THREE.SphereGeometry(0.1, 10, 10);
-  var material = new THREE.MeshBasicMaterial({color:0x00ff00});
+  var material = new THREE.MeshBasicMaterial({color:0xffffff});
   this.nodeMesh = new THREE.Mesh(nodeGeometry, material);
   this.nodeMesh.position.copy(this.position);
 
@@ -372,7 +372,7 @@ constructor(start, end){
 
   var edgeGeometry = new THREE.BufferGeometry().setFromPoints(points);
 
-  var material = new THREE.MeshBasicMaterial({color:0x00ff00});
+  var material = new THREE.MeshBasicMaterial({color:0x0fffff});
 
   this.mesh = new THREE.Line(edgeGeometry, material);
 }
