@@ -38,7 +38,7 @@ function main(){
   gui = new GUI;
   
   gui.add(parameters, `mainarms`, 0, 20, 1);
-  gui.add(parameters, `shards`, 0, 10);
+  gui.add(parameters, `shards`, 0, 10, 1);
 
   //CREATE SCENE AND CAMERA
   scene = new THREE.Scene();
