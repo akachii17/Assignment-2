@@ -1,386 +1,319 @@
-//IMPORT MODULES
-import './style.css';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import GUI from 'lil-gui';
 
-//CONSTANT & VARIABLES
-let width = window.innerWidth;
-let height = window.innerHeight;
-//-- GUI PAREMETERS
- 
-//-- SCENE VARIABLES
-var gui;
-var scene;
-var camera;
-var renderer;
-var container;
-var control;
-var ambientLight;
-var directionalLight;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-const parameters = {
-  mainarms: 6,
-  shards: 2,
+const controls = new OrbitControls(camera, renderer.domElement);
+
+const colors = ['#661D98', '#2CBDFE', '#47DBCD', '#F5B14C', '#960019'];
+
+function koch_line(start, end, factor) {
+    const x1 = start[0], y1 = start[1];
+    const x2 = end[0], y2 = end[1];
+    const l = Math.sqrt((x2 - x1)**2 + (y2 - y1)**2);
+
+    const a = [x1, y1];
+    const b = [x1 + (x2 - x1) / 3., y1 + (y2 - y1) / 3.];
+    const c = [b[0] + l / 3. * Math.cos(factor * Math.PI / 3.), b[1] + l / 3. * Math.sin(factor * Math.PI / 3.)];
+    const d = [x1 + 2. * (x2 - x1) / 3., y1 + 2. * (y2 - y1) / 3.];
+    const e = [x2, y2];
+
+    return { 'a': a, 'b': b, 'c': c, 'd': d, 'e': e, 'factor': factor };
 }
 
-//-- GEOMETRY PARAMETERS
-//Create an empty array for storing all the geometrie
-var nodes = [];
-var edges = [];
-var angleMultiplier = 30;
-var arms = parameters.mainarms;
-var sha = parameters.shards;
- 
+function koch_snowflake(degree, s = 5.0) {
+    const lines = [];
 
-function main(){
-  //GUI
-  gui = new GUI;
-  
-  gui.add(parameters, `mainarms`, 0, 20, 1);
-  gui.add(parameters, `shards`, 0, 10, 1);
+    const sixty_degrees = Math.PI / 3.;
+    const A = [0., 0.];
+    const B = [s, 0.];
+    const C = [s * Math.cos(sixty_degrees), s * Math.sin(sixty_degrees)];
 
-  //CREATE SCENE AND CAMERA
-  scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera( 35, width / height, 0.1, 100);
-  camera.position.set(10, 10, 10)
-
-  //LIGHTINGS
-  ambientLight = new THREE.AmbientLight(0xffffff, 3);
-  scene.add(ambientLight);
-
-  directionalLight = new THREE.DirectionalLight( 0xffffff, 1);
-  directionalLight.position.set(2,5,5);
-  directionalLight.target.position.set(-1,-1,0);
-  scene.add( directionalLight );
-  scene.add(directionalLight.target);
-
-  //GEOMETRY INITIATION
-
-  //Testing the Node Class
- 
-  var location = new THREE.Vector3(0,0,0);
-  generateTree(location, sha, arms, null);
-
-
-  //RESPONSIVE WINDOW
-  window.addEventListener('resize', handleResize);
- 
-  //CREATE A RENDERER
-  renderer = new THREE.WebGLRenderer({alpha:true, antialias:true});
-  renderer.setSize( window.innerWidth, window.innerHeight );
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  container = document.querySelector('#threejs-container');
-  container.append(renderer.domElement);
-  
-  //CREATE MOUSE CONTROL
-  control = new OrbitControls( camera, renderer.domElement );
-
-  //EXECUTE THE UPDATE
-  animate();
-}
- 
-//-----------------------------------------------------------------------------------
-//HELPER FUNCTIONS
-//-----------------------------------------------------------------------------------
-
-//RECURSIVE TREE GENERATION
-function generateTree(position, sha, parentAngle, parent){
-  var node = new TreeNode(position, sha, parentAngle, parent);
-  nodes.push(node);
-
-  if (parent){
-    var edge = new Edge(parent.position, node.position);
-    edges.push(edge);
-  }
-
-  if (sha > 0){
-    node.createChildren();
-    for(var i=0; i<node.children.length; i++){
-      var child = node.children[i];
-      generateTree(child.position, child.sha, child.mainarms, node);
-    }
-  }
-}
-
-console.log(edges, nodes);
-
-//RESPONSIVE
-function handleResize() {
-  width = window.innerWidth;
-  height = window.innerHeight;
-  camera.aspect = width / height;
-  camera.updateProjectionMatrix();
-  renderer.setSize(width, height);
-  renderer.render(scene, camera);
-}
-
-//RANDOM INTEGER IN A RANGE
-function getRndInteger(min, max){
-  return Math.floor(Math.random() * (max-min+1)) + min;
-}
-
-// Remove 3D Objects and clean the caches
-function removeObject(nodes) {
-  if (!(nodes instanceof THREE.Object3D)) return;
-
-  // Remove the geometry to free GPU resources
-  if (nodes.geometry) nodes.geometry.dispose();
-
-  // Remove the material to free GPU resources
-  if (nodes.material) {
-    if (nodes.material instanceof Array) {
-      nodes.material.forEach((material) => material.dispose());
+    if (degree === 0) {
+        lines.push(koch_line(A, B, 0));
+        lines.push(koch_line(B, C, 2));
+        lines.push(koch_line(C, A, 4));
     } else {
-      nodes.material.dispose();
+        lines.push(koch_line(A, B, 5));
+        lines.push(koch_line(B, C, 1));
+        lines.push(koch_line(C, A, 3));
     }
-  }
 
-  // Remove object from scene
-  nodes.removeFromParent();
+    for (let i = 1; i < degree; i++) {
+        for (let j = 0; j < 3 * 4**(i - 1); j++) {
+            const line = lines.shift();
+            const factor = line['factor'];
+
+            lines.push(koch_line(line['a'], line['b'], factor % 6));
+            lines.push(koch_line(line['b'], line['c'], (factor - 1) % 6));
+            lines.push(koch_line(line['c'], line['d'], (factor + 1) % 6));
+            lines.push(koch_line(line['d'], line['e'], factor % 6));
+        }
+    }
+
+    return lines;
 }
 
-//Remove the cubes
-function removeObjects(){
-  arms = parameters.mainarms;
-  level = parameters.shards;
+const gui = new GUI();
+const params = {
+    triangleSize: 5.0,
+    lineVisibility: {
+        a: true,
+        b: true,
+        c: true,
+        d: true,
+        e: true
+    }
+};
 
+gui.add(params, 'triangleSize', 1.0, 10.0).onChange(() => {
+    scene.clear();
+    drawSnowflake();
+});
 
-  nodes.forEach(element =>{
-    let scene_objects = scene.getObjectByName(element.name);
-    removeObject(scene_objects);
-    console.log(scene_objects);
-  })
+const visibilityFolder = gui.addFolder('Line Visibility');
+visibilityFolder.add(params.lineVisibility, 'a').onChange(drawSnowflake);
+visibilityFolder.add(params.lineVisibility, 'b').onChange(drawSnowflake);
+visibilityFolder.add(params.lineVisibility, 'c').onChange(drawSnowflake);
+visibilityFolder.add(params.lineVisibility, 'd').onChange(drawSnowflake);
+visibilityFolder.add(params.lineVisibility, 'e').onChange(drawSnowflake);
 
-  edges.forEach(element =>{
-    let scene_objects = scene.getObjectByName(element.name);
-    removeObject(scene_objects);
-    console.log(scene_objects);
-  })
+function drawSnowflake() {
+  console.log(`Drawing snowflake`);
+    const degree = 5;
+    const s = params.triangleSize;
 
-  nodes = [];
-  edges = [];
+    for (let d = 0; d <= degree; d++) {
+        const lines = koch_snowflake(d, s);
+        const color = colors[d];
 
-  
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+
+            if (params.lineVisibility.a) {
+                vertices.push(line['a'][0], line['a'][1], 0);
+            }
+            if (params.lineVisibility.b) {
+                vertices.push(line['b'][0], line['b'][1], 0);
+            }
+            if (params.lineVisibility.c) {
+                vertices.push(line['c'][0], line['c'][1], 0);
+            }
+            if (params.lineVisibility.d) {
+                vertices.push(line['d'][0], line['d'][1], 0);
+            }
+            if (params.lineVisibility.e) {
+                vertices.push(line['e'][0], line['e'][1], 0);
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
+            const material = new THREE.LineBasicMaterial({ color: color });
+            const lineObject = new THREE.Line(geometry, material);
+            scene.add(lineObject);
+        }
+    }
 }
 
-//ANIMATE AND RENDER
+camera.position.z = 10;
+drawSnowflake();
+
 function animate() {
-	requestAnimationFrame( animate );
- 
- // control.update();
-
- if(arms != parameters.mainarms){
-  removeObjects()
-  var location = new THREE.Vector3(0,0,0);
-  generateTree(location, sha, arms, null);
-
- }
-
- /*
-// Re draw scene when changing dat.gui parameters
-
-function reDrawScene() {
-
-  cylgeometry = new THREE.Geometry();
-  snowflake = [];
-  pivotParent = new THREE.Object3D();
-  snowflakeObj = new THREE.Object3D();
-  snowflakeObjCopy = new THREE.Object3D();
-  
-  for (let i = scene.children.length - 1; i >= 0; i--) {
-  
-  obj = scene.children[i];
-  scene.remove(obj);
-  }
-  
-  createLights();
-  createSnowflakeScene();
-  
-  addSnowflakeMiddle();
-  calculateSnowflakeMainArms();
-  drawSnowflakeTemplate();
-  
-  // add pivot parent to scene
-  scene.add(pivotParent);
-  
-  // draw sublines
-  calculateSublines();
-  }
-*/
-
-	renderer.render( scene, camera );
+  console.log(`Animate...`);
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
 }
-//-----------------------------------------------------------------------------------
-// CLASS
-//-----------------------------------------------------------------------------------
-class TreeNode{
-  constructor(position, sha, parentAngle, parent){
-    this.position = position;
-    this.sha = sha;
-    this.parentAngle = parentAngle * (Math.PI/180);
-    this.parentDirection = new THREE.Vector3(0,1,0);
-    this.parent = parent;
-    this.children = [];
+
+animate();
+
 
 /*
-// calculate points from center of circle to edge
-// given number of segments
+// Schritt 1: Importiere notwendige Bibliotheken
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import GUI from 'lil-gui';
 
-function calculateSnowflakeMainArms() {
+// Schritt 2: Erstelle eine 3D-Szene, Kamera und Renderer
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-  // get geometry for snowflake template
-  for (let i = 0; i < segmentCount; i++) {
-  
-  // segement size
-  let theta = i / segmentCount * Math.PI * 2;
-  
-  // line drawing
-  cylgeometry.vertices.push(
-  new THREE.Vector3(
-  0,
-  Math.cos(theta) * radius,
-  Math.sin(theta) * radius));
-  
-  
-  
-  // start point is always central to screen
-  let start = new THREE.Vector3(0, 0, 0);
-  
-  // end is a segment point from edge of circle
-  let end =
-  new THREE.Vector3(
-  0,
-  Math.cos(theta) * radius,
-  Math.sin(theta) * radius);
-  
-  
-  //define end point for copy
-  let rotatedEnd =
-  new THREE.Vector3(
-  0,
-  Math.cos(theta) * radius,
-  Math.sin(theta) * radius);
-  
-  
-  // rotate vector around axis to find new co-ordinate
-  let axis = new THREE.Vector3(1, 0, 0);
-  let angle = Math.PI / segmentCount;
-  
-  //apply rotation
-  rotatedEnd.applyAxisAngle(axis, angle);
-  
-  // push lines to obj
-  snowflake.push({ "start": start, "end": end });
-  snowflakeCopy.push({ "start": start, "end": rotatedEnd });
-  }
-  
-  snowflakeMainArmsGeometry();
-  calculateSnowflakeConstraints();
-  }
-  
-  // work out snowflake main arms geometry
+// Schritt 3: Füge Orbit-Steuerungen hinzu
+const controls = new OrbitControls(camera, renderer.domElement);
 
-  function snowflakeMainArmsGeometry() {
-  
-  // draw lines for snowflake
-  for (let i = 0; i < snowflake.length; i++) {
-  
-  //temp vars
-  let start, end;
-  let geo = new THREE.Geometry();
-  let line;
-  
-  // define start and end co-ordinates
-  start = snowflake[i].start;
-  end = snowflake[i].end;
-  
-  // angle of line in degrees
-  let angleDeg = Math.atan2(end.y - start.y, end.z - start.z) * 180 / Math.PI;
-  angleDeg = Math.round(angleDeg);
-  
-  // push to snowflake
-  snowflake[i].angle = angleDeg;
-  
-  // push to geometry
-  geo.vertices.push(start);
-  geo.vertices.push(end);
-  
-  //new line
-  line = new THREE.Line(geo, snowflakeLineMat);
-  line2 = new THREE.Line(geo, snowflakeIntersectionLineMat); // visual only
-  
-  // add line to obj
-  snowflakeObj.add(line);
-  snowflakeObjCopy.add(line2); // visual only
-  }
-  }
-*/  
+// Schritt 4: Definiere Farben und Funktionen für das Koch-Schneeflocken-Fraktal
+const colors = ['#661D98', '#2CBDFE', '#47DBCD', '#F5B14C', '#960019'];
 
-  //Calculate the angle based on the parent's angle
-  this.mainarms = this.parentAngle + getRndInteger(0-angleMultiplier/2, angleMultiplier/2) * (Math.PI/180);
-
-  this.length = this.sha === 0 ? 2:Math.random() * 2 + 1;
-
-  //Create the shape for the node
-  var nodeGeometry = new THREE.SphereGeometry(0.1, 10, 10);
-  var material = new THREE.MeshBasicMaterial({color:0xffffff});
-  this.nodeMesh = new THREE.Mesh(nodeGeometry, material);
-  this.nodeMesh.position.copy(this.position);
-
-  //Add the node to the scene
-  scene.add(this.nodeMesh);
-
-  //Create an edge (branch)connecting to the parent if it exist
-  if (parent){
-    var edge = new Edge(parent.position, this.position);
-    this.edgeMesh = edge.mesh;
-    scene.add(this.edgeMesh);
-  }
+function koch_line(start, end, factor) {
+    // ... (Funktion zum Generieren von Linien)
 }
 
-createChildren(){
-  for(var i=0; i<6; i++){
-    var childPosition = new THREE.Vector3().copy(this.position);
-
-    let axisZ = new THREE.Vector3(0,0,1);
-    let axisY = new THREE.Vector3(0,1,0);
-
-    this.parentDirection.applyAxisAngle(axisZ, this.mainarms);
-    this.parentDirection.applyAxisAngle(axisY, this.mainarms);
-
-    childPosition.x += this.parentDirection.x * this.length;
-    childPosition.y += this.parentDirection.y * this.length;
-    childPosition.z += this.parentDirection.z * this.length;
-
-    var child = new TreeNode(childPosition, this.sha-1, this.mainarms, this)
-
-    this.children.push(child);
-    
-  }
-}
+function koch_snowflake(degree, s = 5.0) {
+    // ... (Funktion zum Generieren der Schneeflocke)
 }
 
-class Edge{
-constructor(start, end){
-  this.start = start;
-  this.end = end;
+// Schritt 5: Erstelle ein GUI mit Lil-GUI
+const gui = new GUI();
+const params = {
+    triangleSize: 5.0,
+    lineVisibility: {
+        a: true,
+        b: true,
+        c: true,
+        d: true,
+        e: true
+    }
+};
 
-  const points = [];
-  points.push(this.start);
-  points.push(this.end);
+// Schritt 6: Füge GUI-Elemente hinzu und verbinde sie mit der Zeichenfunktion
+gui.add(params, 'triangleSize', 1.0, 10.0).onChange(() => {
+    // Schritt 7: Lösche die Szene und zeichne die Schneeflocke neu
+    scene.clear();
+    drawSnowflake();
+});
 
-  var edgeGeometry = new THREE.BufferGeometry().setFromPoints(points);
+const visibilityFolder = gui.addFolder('Line Visibility');
+visibilityFolder.add(params.lineVisibility, 'a').onChange(drawSnowflake);
+visibilityFolder.add(params.lineVisibility, 'b').onChange(drawSnowflake);
+visibilityFolder.add(params.lineVisibility, 'c').onChange(drawSnowflake);
+visibilityFolder.add(params.lineVisibility, 'd').onChange(drawSnowflake);
+visibilityFolder.add(params.lineVisibility, 'e').onChange(drawSnowflake);
 
-  var material = new THREE.MeshBasicMaterial({color:0x0fffff});
+// Schritt 8: Definiere die Funktion zum Zeichnen der Schneeflocke
+function drawSnowflake() {
+    console.log(`Drawing snowflake`);
+    const degree = 5;
+    const s = params.triangleSize;
 
-  this.mesh = new THREE.Line(edgeGeometry, material);
+    // Schritt 9: Iteriere über die Grade und zeichne Linien entsprechend der Sichtbarkeit
+    for (let d = 0; d <= degree; d++) {
+        const lines = koch_snowflake(d, s);
+        const color = colors[d];
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+
+            // Schritt 10: Füge die sichtbaren Linienpunkte zur Geometrie hinzu
+            if (params.lineVisibility.a) {
+                vertices.push(line['a'][0], line['a'][1], 0);
+            }
+            if (params.lineVisibility.b) {
+                vertices.push(line['b'][0], line['b'][1], 0);
+            }
+            if (params.lineVisibility.c) {
+                vertices.push(line['c'][0], line['c'][1], 0);
+            }
+            if (params.lineVisibility.d) {
+                vertices.push(line['d'][0], line['d'][1], 0);
+            }
+            if (params.lineVisibility.e) {
+                vertices.push(line['e'][0], line['e'][1], 0);
+            }
+
+            // Schritt 11: Erstelle ein Linienobjekt und füge es zur Szene hinzu
+            geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
+            const material = new THREE.LineBasicMaterial({ color: color });
+            const lineObject = new THREE.Line(geometry, material);
+            scene.add(lineObject);
+        }
+    }
 }
+
+// Schritt 12: Setze die Kameraposition und zeichne die Schneeflocke
+camera.position.z = 10;
+drawSnowflake();
+
+// Schritt 13: Erstelle die Animationsfunktion
+function animate() {
+    console.log(`Animate...`);
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
 }
 
-//-----------------------------------------------------------------------------------
-// EXECUTE MAIN 
-//-----------------------------------------------------------------------------------
+// Schritt 14: Starte die Animation
+animate();
 
-main();
 
+// Schritt 5: Erstelle ein GUI mit Lil-GUI
+const gui = new GUI();
+const params = {
+    triangleSize: 5.0,
+    lineVisibility: {
+        a: { 'a': false, 'b': true, 'c': true, 'd': true, 'e': true },
+        b: { 'a': true, 'b': false, 'c': true, 'd': true, 'e': true },
+        c: { 'a': true, 'b': true, 'c': false, 'd': true, 'e': true },
+        d: { 'a': true, 'b': true, 'c': true, 'd': false, 'e': true },
+        e: { 'a': true, 'b': true, 'c': true, 'd': true, 'e': false }
+    }
+};
+
+// ...
+
+const visibilityFolder = gui.addFolder('Line Visibility');
+visibilityFolder.add(params.lineVisibility.a, 'a').onChange(drawSnowflake);
+visibilityFolder.add(params.lineVisibility.b, 'b').onChange(drawSnowflake);
+visibilityFolder.add(params.lineVisibility.c, 'c').onChange(drawSnowflake);
+visibilityFolder.add(params.lineVisibility.d, 'd').onChange(drawSnowflake);
+visibilityFolder.add(params.lineVisibility.e, 'e').onChange(drawSnowflake);
+
+// ...
+
+// Schritt 8: Definiere die Funktion zum Zeichnen der Schneeflocke
+function drawSnowflake() {
+    console.log(`Drawing snowflake`);
+    const degree = 5;
+    const s = params.triangleSize;
+
+    // ...
+
+    // Schritt 9: Iteriere über die Grade und zeichne Linien entsprechend der Sichtbarkeit
+    for (let d = 0; d <= degree; d++) {
+        const lines = koch_snowflake(d, s);
+        const color = colors[d];
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+
+            // Schritt 10: Füge die sichtbaren Linienpunkte zur Geometrie hinzu
+            if (params.lineVisibility.a.a) {
+                vertices.push(line['a'][0], line['a'][1], 0);
+            }
+            if (params.lineVisibility.b.b) {
+                vertices.push(line['b'][0], line['b'][1], 0);
+            }
+            if (params.lineVisibility.c.c) {
+                vertices.push(line['c'][0], line['c'][1], 0);
+            }
+            if (params.lineVisibility.d.d) {
+                vertices.push(line['d'][0], line['d'][1], 0);
+            }
+            if (params.lineVisibility.e.e) {
+                vertices.push(line['e'][0], line['e'][1], 0);
+            }
+
+            // ...
+        }
+    }
+}
+
+// ...
+
+
+*/
