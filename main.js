@@ -37,7 +37,7 @@ function main(){
   //GUI
   gui = new GUI;
   
-  gui.add(parameters, `mainarms`, 0, 20);
+  gui.add(parameters, `mainarms`, 0, 20, 1);
   gui.add(parameters, `shards`, 0, 10);
 
   //CREATE SCENE AND CAMERA
