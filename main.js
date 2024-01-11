@@ -1,3 +1,73 @@
+/*
+
+// IMPORT MODULES
+import './style.css';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Initialize Three.js components
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+
+// Set render dimensions and append to the browser window
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Set background color to a slightly darker gray
+renderer.setClearColor(0x808080);
+
+// Initial dimensions and segments of the surface
+let surfaceWidth = 5;
+let surfaceHeight = 5;
+let widthSegments = 10;
+let heightSegments = 10;
+
+// Create a surface (PlaneGeometry) and material
+const surfaceGeometry = new THREE.PlaneGeometry(surfaceWidth, surfaceHeight, widthSegments, heightSegments);
+const surfaceMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+
+// Create a material for the visible surface
+const surface = new THREE.Mesh(surfaceGeometry, surfaceMaterial);
+scene.add(surface);
+
+// Set camera position
+camera.position.z = 8;
+camera.position.y = 2;
+
+// Orbit controls
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.25;
+controls.screenSpacePanning = false;
+controls.maxPolarAngle = Math.PI;
+
+// Animation function
+const animate = function () {
+    requestAnimationFrame(animate);
+
+    controls.update();
+    renderer.render(scene, camera);
+};
+
+// Start animation
+animate();
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
 // IMPORT MODULES
 import './style.css';
 import * as THREE from 'three';
@@ -134,6 +204,41 @@ function updateSurfaceGeometry() {
     scene.add(surface);
 }
 
+// ... (vorheriger Code)
+
+// GUI controls for midpoint position
+const midpointFolder = gui.addFolder('Midpoint Position');
+const midpointPosition = { x: 0, y: 0, z: 0 };
+
+midpointFolder.add(midpointPosition, 'x', -10, 10).step(0.1).onChange(() => {
+    updateSurfaceMidpoint();
+});
+
+midpointFolder.add(midpointPosition, 'y', -10, 10).step(0.1).onChange(() => {
+    updateSurfaceMidpoint();
+});
+
+midpointFolder.add(midpointPosition, 'z', -10, 10).step(0.1).onChange(() => {
+    updateSurfaceMidpoint();
+});
+
+// Function to update surface midpoint position
+function updateSurfaceMidpoint() {
+    const deltaX = midpointPosition.x - surface.position.x;
+    const deltaY = midpointPosition.y - surface.position.y;
+    const deltaZ = midpointPosition.z - surface.position.z;
+
+    surface.position.set(midpointPosition.x, midpointPosition.y, midpointPosition.z);
+
+    // Verschiebe die gesamte Szene um die Differenz, um den Eindruck zu erwecken,
+    // dass der Mittelpunkt verschoben wird, während die Eckpunkte an ihrer relativen Position bleiben.
+    scene.position.x -= deltaX;
+    scene.position.y -= deltaY;
+    scene.position.z -= deltaZ;
+}
+
+// ... (nachfolgender Code)
+
 // Animation function
 const animate = function () {
     requestAnimationFrame(animate);
@@ -144,6 +249,20 @@ const animate = function () {
 
 // Start animation
 animate();
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /*
@@ -269,7 +388,25 @@ animate();
 
 */
 
-/*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import * as THREE from 'three';
 import * as dat from 'dat.gui';
@@ -334,5 +471,3 @@ const animate = function () {
 };
 
 animate();
-
-*/
