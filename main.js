@@ -149,6 +149,8 @@ animate();
 
 */
 
+/*
+
 // IMPORT MODULES
 import './style.css';
 import * as THREE from 'three';
@@ -204,13 +206,17 @@ controls.dampingFactor = 0.25;
 controls.screenSpacePanning = false;
 controls.maxPolarAngle = Math.PI;
 
+// ... (vorheriger Code)
+
+// Import dat.gui
+import * as dat from 'dat.gui';
+
 // Create GUI
-const gui = new GUI();
+const gui = new dat.GUI();
 
 // GUI controls
 const surfaceFolder = gui.addFolder('Surface Dimensions');
 
-// Define an object to hold parameters
 const surfaceParams = {
     width: surfaceWidth,
     height: surfaceHeight,
@@ -218,28 +224,23 @@ const surfaceParams = {
     heightSegments: heightSegments
 };
 
-const widthControl = surfaceFolder.add(surfaceParams, 'width').min(1).max(10).step(1).listen();
-widthControl.onChange(() => {
-    surfaceWidth = surfaceParams.width;
+surfaceFolder.add(surfaceParams, 'width', 1, 10).step(1).onChange((value) => {
+    surfaceWidth = value;
     updateSurfaceGeometry();
 });
 
-const heightControl = surfaceFolder.add(surfaceParams, 'height').min(1).max(10).step(1).listen();
-heightControl.onChange(() => {
-    surfaceHeight = surfaceParams.height;
+surfaceFolder.add(surfaceParams, 'height', 1, 10).step(1).onChange((value) => {
+    surfaceHeight = value;
     updateSurfaceGeometry();
 });
 
-// Add controls for width and height segments
-const widthSegmentsControl = surfaceFolder.add(surfaceParams, 'widthSegments').min(1).max(20).step(1).listen();
-widthSegmentsControl.onChange(() => {
-    widthSegments = surfaceParams.widthSegments;
+surfaceFolder.add(surfaceParams, 'widthSegments', 1, 20).step(1).onChange((value) => {
+    widthSegments = value;
     updateSurfaceGeometry();
 });
 
-const heightSegmentsControl = surfaceFolder.add(surfaceParams, 'heightSegments').min(1).max(20).step(1).listen();
-heightSegmentsControl.onChange(() => {
-    heightSegments = surfaceParams.heightSegments;
+surfaceFolder.add(surfaceParams, 'heightSegments', 1, 20).step(1).onChange((value) => {
+    heightSegments = value;
     updateSurfaceGeometry();
 });
 
@@ -260,6 +261,8 @@ function updateSurfaceGeometry() {
     scene.add(gridHelper);
 }
 
+// ... (nachfolgender Code)
+
 // Animation function
 const animate = function () {
     requestAnimationFrame(animate);
@@ -269,4 +272,70 @@ const animate = function () {
 };
 
 // Start animation
+animate();
+
+*/
+
+import * as THREE from 'three';
+import * as dat from 'dat.gui';
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const surfaceGeometry = new THREE.PlaneGeometry(5, 5, 10, 10);
+const surfaceMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+const surface = new THREE.Mesh(surfaceGeometry, surfaceMaterial);
+scene.add(surface);
+
+let gridHelper = new THREE.GridHelper(5, 10, 0xdeb887, 0xdeb887);
+scene.add(gridHelper);
+
+camera.position.z = 8;
+
+const gui = new dat.GUI();
+const surfaceParams = {
+    width: 5,
+    height: 5,
+    widthSegments: 10,
+    heightSegments: 10
+};
+
+const surfaceFolder = gui.addFolder('Surface Dimensions');
+const widthControl = surfaceFolder.add(surfaceParams, 'width').min(1).max(10).step(1);
+widthControl.onChange(updateSurfaceGeometry);
+
+const heightControl = surfaceFolder.add(surfaceParams, 'height').min(1).max(10).step(1);
+heightControl.onChange(updateSurfaceGeometry);
+
+const widthSegmentsControl = surfaceFolder.add(surfaceParams, 'widthSegments').min(1).max(20).step(1);
+widthSegmentsControl.onChange(updateSurfaceGeometry);
+
+const heightSegmentsControl = surfaceFolder.add(surfaceParams, 'heightSegments').min(1).max(20).step(1);
+heightSegmentsControl.onChange(updateSurfaceGeometry);
+
+function updateSurfaceGeometry() {
+    scene.remove(surface);
+    scene.remove(gridHelper);
+
+    surface.geometry.dispose();
+    surface.material.dispose();
+
+    surface.geometry = new THREE.PlaneGeometry(surfaceParams.width, surfaceParams.height, surfaceParams.widthSegments, surfaceParams.heightSegments);
+    scene.add(surface);
+
+    gridHelper.geometry.dispose();
+    gridHelper.material.dispose();
+
+    gridHelper = new THREE.GridHelper(surfaceParams.width, surfaceParams.widthSegments, 0xdeb887, 0xdeb887);
+    scene.add(gridHelper);
+}
+
+const animate = function () {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+};
+
 animate();
