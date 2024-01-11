@@ -21,62 +21,6 @@ const surface = new THREE.Mesh(surfaceGeometry, surfaceMaterial);
 // Add the surface to the scene
 scene.add(surface);
 
-// Define a function to create points on the surface
-function createPointsOnSurface(surfaceGeometry) {
-    const points = [];
-
-    // Use surface.geometry.attributes.position.array instead of surfaceGeometry.vertices
-    const positions = surface.geometry.attributes.position.array;
-
-    for (let i = 0; i < positions.length; i += 3) {
-        const vertex = new THREE.Vector3(positions[i], positions[i + 1], positions[i + 2]);
-        points.push(vertex);
-    }
-
-    return points;
-}
-
-// Create points on the surface
-const points = createPointsOnSurface(surfaceGeometry);
-
-// Define a function to connect points opposite to each other
-function connectOppositePoints(points) {
-    const lines = [];
-
-    const widthSegments = surfaceGeometry.parameters.widthSegments;
-    const heightSegments = surfaceGeometry.parameters.heightSegments;
-
-    for (let i = 0; i <= heightSegments; i++) {
-        for (let j = 0; j <= widthSegments; j++) {
-            const currentIndex = i * (widthSegments + 1) + j;
-            const oppositeIndex = (i + Math.floor(heightSegments / 2)) % (heightSegments + 1) * (widthSegments + 1) + (widthSegments - j);
-
-            if (oppositeIndex < points.length) {
-                const geometry = new THREE.BufferGeometry();
-                const vertices = [];
-                vertices.push(points[currentIndex].x, points[currentIndex].y, points[currentIndex].z);
-                vertices.push(points[oppositeIndex].x, points[oppositeIndex].y, points[oppositeIndex].z);
-                geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-
-                const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
-                const line = new THREE.Line(geometry, lineMaterial);
-
-                lines.push(line);
-            }
-        }
-    }
-
-    return lines;
-}
-
-// Create lines connecting opposite points
-const lines = connectOppositePoints(points);
-
-// Add lines to the scene
-lines.forEach(line => {
-    scene.add(line);
-});
-
 // Set camera position
 camera.position.z = 5;
 
