@@ -1,5 +1,3 @@
-/*
-
 // IMPORT MODULES
 import './style.css';
 import * as THREE from 'three';
@@ -147,7 +145,6 @@ const animate = function () {
 // Start animation
 animate();
 
-*/
 
 /*
 
@@ -206,8 +203,6 @@ controls.dampingFactor = 0.25;
 controls.screenSpacePanning = false;
 controls.maxPolarAngle = Math.PI;
 
-// ... (vorheriger Code)
-
 // Import dat.gui
 import * as dat from 'dat.gui';
 
@@ -261,8 +256,6 @@ function updateSurfaceGeometry() {
     scene.add(gridHelper);
 }
 
-// ... (nachfolgender Code)
-
 // Animation function
 const animate = function () {
     requestAnimationFrame(animate);
@@ -275,6 +268,8 @@ const animate = function () {
 animate();
 
 */
+
+/*
 
 import * as THREE from 'three';
 import * as dat from 'dat.gui';
@@ -339,3 +334,5 @@ const animate = function () {
 };
 
 animate();
+
+*/
