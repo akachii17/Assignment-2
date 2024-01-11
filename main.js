@@ -1,5 +1,3 @@
-
-
 // IMPORT MODULES
 import './style.css';
 import * as THREE from 'three';
@@ -103,4 +101,3 @@ const animate = function () {
 
 // Start animation
 animate();
-
