@@ -4,12 +4,3 @@ body {
   width: 100vw;
   height: 100vh;
 }
-#threejs-container {
-  position: block;
-  margin: 0;
-  padding: 0;
-  width: 100vw;
-  height: 100vh;
-  background: linear-gradient(rgb(17, 90, 206), rgb(0, 72, 255));
-  overflow: hidden;
-}
