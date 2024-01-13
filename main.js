@@ -66,7 +66,7 @@ animate();
 
 
 
-/*
+
 
 // IMPORT MODULES
 import './style.css';
@@ -250,7 +250,7 @@ const animate = function () {
 // Start animation
 animate();
 
-*/
+
 
 
 
@@ -406,7 +406,7 @@ animate();
 
 
 
-
+/*
 
 import * as THREE from 'three';
 import * as dat from 'dat.gui';
@@ -471,3 +471,4 @@ const animate = function () {
 };
 
 animate();
+ */
