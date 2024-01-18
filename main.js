@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { NURBSSurface, MeshBasicMaterial, Mesh, PerspectiveCamera, Scene, WebGLRenderer } from 'three';
+import { NURBSSurface, Vector4, ParametricGeometry, MeshBasicMaterial, Mesh, PerspectiveCamera, Scene, WebGLRenderer } from 'three';
 
 const camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
 camera.position.set(50, 50, 100);
@@ -14,61 +14,36 @@ const knots1 = [0, 0, 1, 1];
 const knots2 = [0, 0, 1, 1];
 const controlPoints = [
   [
-    new THREE.Vector4(-10, 0, 10, 1),
-    new THREE.Vector4(-10, 0, 0, 1),
-    new THREE.Vector4(-10, 0, -10, 1),
+    new Vector4(-10, 0, 10, 1),
+    new Vector4(-10, 0, 0, 1),
+    new Vector4(-10, 0, -10, 1),
   ],
   [
-    new THREE.Vector4(0, 10, 10, 1),
-    new THREE.Vector4(0, 10, 0, 1),
-    new THREE.Vector4(0, 10, -10, 1),
+    new Vector4(0, 10, 10, 1),
+    new Vector4(0, 10, 0, 1),
+    new Vector4(0, 10, -10, 1),
   ],
   [
-    new THREE.Vector4(10, 0, 10, 1),
-    new THREE.Vector4(10, 0, 0, 1),
-    new THREE.Vector4(10, 0, -10, 1),
+    new Vector4(10, 0, 10, 1),
+    new Vector4(10, 0, 0, 1),
+    new Vector4(10, 0, -10, 1),
   ],
 ];
 
 const nurbsSurface = new NURBSSurface(2, 2, knots1, knots2, controlPoints);
 
-const geometry = new THREE.Geometry();
+const geometry = new ParametricGeometry((u, v, target) => nurbsSurface.getPoint(u, v, target), 20, 20);
 
-const numPointsU = 20;
-const numPointsV = 20;
+const material = new MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
 
-for (let i = 0; i < numPointsU; i++) {
-  for (let j = 0; j < numPointsV; j++) {
-    const u = i / (numPointsU - 1);
-    const v = j / (numPointsV - 1);
-
-    const point = nurbsSurface.getPoint(u, v, new THREE.Vector3());
-    geometry.vertices.push(point);
-  }
-}
-
-for (let i = 0; i < numPointsU - 1; i++) {
-  for (let j = 0; j < numPointsV - 1; j++) {
-    const a = i * numPointsV + j;
-    const b = (i + 1) * numPointsV + j;
-    const c = (i + 1) * numPointsV + j + 1;
-    const d = i * numPointsV + j + 1;
-
-    geometry.faces.push(new THREE.Face3(a, b, d));
-    geometry.faces.push(new THREE.Face3(b, c, d));
-  }
-}
-
-const nurbsMaterial = new MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
-
-const nurbsMesh = new Mesh(geometry, nurbsMaterial);
-scene.add(nurbsMesh);
+const mesh = new Mesh(geometry, material);
+scene.add(mesh);
 
 function animate() {
   requestAnimationFrame(animate);
 
-  nurbsMesh.rotation.x += 0.01;
-  nurbsMesh.rotation.y += 0.01;
+  mesh.rotation.x += 0.01;
+  mesh.rotation.y += 0.01;
 
   renderer.render(scene, camera);
 }
