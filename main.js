@@ -73,7 +73,7 @@ function init() {
     return nurbsSurface.getPoint(u, v, target);
   }
 
-  const geometry = new ParametricGeometry(getSurfacePoint, 20, 20);
+  const geometry = new ParametricGeometry(getSurfacePoint, 10, 10);
   const material = new THREE.MeshLambertMaterial({ color: 0x0000ff, side: THREE.DoubleSide });
 const wireframeMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true });
 
@@ -143,6 +143,12 @@ function render() {
 }
 
 animate();
+
+
+
+
+
+
 
 
 
