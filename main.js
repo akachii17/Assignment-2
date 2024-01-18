@@ -1,59 +1,148 @@
 import * as THREE from 'three';
-import { NURBSSurface, Vector4, ParametricGeometry, MeshBasicMaterial, Mesh, PerspectiveCamera, Scene, WebGLRenderer } from 'three';
+import Stats from 'three/addons/libs/stats.module.js';
+import { NURBSSurface } from 'three/addons/curves/NURBSSurface.js';
+import { ParametricGeometry } from 'three/addons/geometries/ParametricGeometry.js';
 
-const camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
-camera.position.set(50, 50, 100);
+let container, stats;
+let camera, scene, renderer;
+let group;
+let targetRotation = 0;
+let targetRotationOnPointerDown = 0;
+let pointerX = 0;
+let pointerXOnPointerDown = 0;
+let windowHalfX = window.innerWidth / 2;
 
-const scene = new Scene();
+init();
+animate();
 
-const renderer = new WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+function init() {
+  container = document.createElement('div');
+  document.body.appendChild(container);
 
-const knots1 = [0, 0, 1, 1];
-const knots2 = [0, 0, 1, 1];
-const controlPoints = [
-  [
-    new Vector4(-10, 0, 10, 1),
-    new Vector4(-10, 0, 0, 1),
-    new Vector4(-10, 0, -10, 1),
-  ],
-  [
-    new Vector4(0, 10, 10, 1),
-    new Vector4(0, 10, 0, 1),
-    new Vector4(0, 10, -10, 1),
-  ],
-  [
-    new Vector4(10, 0, 10, 1),
-    new Vector4(10, 0, 0, 1),
-    new Vector4(10, 0, -10, 1),
-  ],
-];
+  camera = new THREE.PerspectiveCamera(800, window.innerWidth / window.innerHeight, 1, 1000);
+  camera.position.set(-50, 100, 750);
 
-const nurbsSurface = new NURBSSurface(2, 2, knots1, knots2, controlPoints);
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xf0f0f0);
 
-const geometry = new ParametricGeometry((u, v, target) => nurbsSurface.getPoint(u, v, target), 20, 20);
+  scene.add(new THREE.AmbientLight(0xffffff));
 
-const material = new MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+  const light = new THREE.DirectionalLight(0xffffff, 3);
+  light.position.set(1, 1, 1);
+  scene.add(light);
 
-const mesh = new Mesh(geometry, material);
-scene.add(mesh);
+  group = new THREE.Group();
+  group.position.x = 0;
+  group.position.y = 0;
+  group.position.z = 0;
+  scene.add(group);
+
+  // NURBS surface
+  const nsControlPoints = [
+    [
+      new THREE.Vector4(-200, -200, 100, 1),
+      new THREE.Vector4(-200, -100, -200, 1),
+      new THREE.Vector4(-200, 100, 250, 1),
+      new THREE.Vector4(-200, 200, -100, 1),
+    ],
+    [
+      new THREE.Vector4(0, -200, 0, 1),
+      new THREE.Vector4(0, -100, -100, 5),
+      new THREE.Vector4(0, 100, 150, 5),
+      new THREE.Vector4(0, 200, 0, 1),
+    ],
+    [
+      new THREE.Vector4(200, -200, -100, 1),
+      new THREE.Vector4(200, -100, 200, 1),
+      new THREE.Vector4(200, 100, -250, 1),
+      new THREE.Vector4(200, 200, 100, 1),
+    ],
+  ];
+  const degree1 = 2;
+  const degree2 = 3;
+  const knots1 = [0, 0, 0, 1, 1, 1];
+  const knots2 = [0, 0, 0, 0, 1, 1, 1, 1];
+  const nurbsSurface = new NURBSSurface(degree1, degree2, knots1, knots2, nsControlPoints);
+
+  const map = new THREE.TextureLoader().load('textures/uv_grid_opengl.jpg');
+  map.wrapS = map.wrapT = THREE.RepeatWrapping;
+  map.anisotropy = 16;
+  map.encoding = THREE.sRGBEncoding;
+
+  function getSurfacePoint(u, v, target) {
+    return nurbsSurface.getPoint(u, v, target);
+  }
+
+  const geometry = new ParametricGeometry(getSurfacePoint, 20, 20);
+  const material = new THREE.MeshLambertMaterial({ color: 0x0000ff, side: THREE.DoubleSide });
+const wireframeMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true });
+
+const object = new THREE.Mesh(geometry, material);
+const wireframe = new THREE.Mesh(geometry, wireframeMaterial);
+
+object.position.set(-200, 100, 0);
+object.scale.multiplyScalar(1);
+
+wireframe.position.set(-200, 100, 0);
+wireframe.scale.multiplyScalar(1);
+
+group.add(object);
+group.add(wireframe);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  container.appendChild(renderer.domElement);
+
+  stats = new Stats();
+  container.appendChild(stats.dom);
+
+  container.style.touchAction = 'none';
+  container.addEventListener('pointerdown', onPointerDown);
+
+  window.addEventListener('resize', onWindowResize);
+}
+
+function onWindowResize() {
+  windowHalfX = window.innerWidth / 2;
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function onPointerDown(event) {
+  if (event.isPrimary === false) return;
+  pointerXOnPointerDown = event.clientX - windowHalfX;
+  targetRotationOnPointerDown = targetRotation;
+  document.addEventListener('pointermove', onPointerMove);
+  document.addEventListener('pointerup', onPointerUp);
+}
+
+function onPointerMove(event) {
+  if (event.isPrimary === false) return;
+  pointerX = event.clientX - windowHalfX;
+  targetRotation = targetRotationOnPointerDown + (pointerX - pointerXOnPointerDown) * 0.02;
+}
+
+function onPointerUp() {
+  if (event.isPrimary === false) return;
+  document.removeEventListener('pointermove', onPointerMove);
+    document.removeEventListener('pointermove', onPointerMove);
+  document.removeEventListener('pointerup', onPointerUp);
+}
 
 function animate() {
   requestAnimationFrame(animate);
+  render();
+  stats.update();
+}
 
-  mesh.rotation.x += 0.01;
-  mesh.rotation.y += 0.01;
-
+function render() {
+  group.rotation.y += (targetRotation - group.rotation.y) * 1;
   renderer.render(scene, camera);
 }
 
 animate();
-
-
-
-
-
 
 
 
