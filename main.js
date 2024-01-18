@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import Stats from 'three/addons/libs/stats.module.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { NURBSSurface } from 'three/addons/curves/NURBSSurface.js';
 import { ParametricGeometry } from 'three/addons/geometries/ParametricGeometry.js';
 
@@ -16,28 +16,35 @@ init();
 animate();
 
 function init() {
+  
+  // Erstellen des Containers für die WebGL-Ausgabe
   container = document.createElement('div');
   document.body.appendChild(container);
 
+  // Kamera-Setup
   camera = new THREE.PerspectiveCamera(800, window.innerWidth / window.innerHeight, 1, 1000);
   camera.position.set(-50, 100, 750);
 
+  //Szenen-Setup
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf0f0f0);
 
+  //Hinzufügen einer Umgebungslichtquelle zur Szene
   scene.add(new THREE.AmbientLight(0xffffff));
 
+  //Hinzufügen einer gerichteten Lichtquelle zur Szene
   const light = new THREE.DirectionalLight(0xffffff, 3);
   light.position.set(1, 1, 1);
   scene.add(light);
 
+  //Gruppe für das 3D-Objekt
   group = new THREE.Group();
   group.position.x = 0;
   group.position.y = 0;
   group.position.z = 0;
   scene.add(group);
 
-  // NURBS surface
+  // NURBS Oberfläche
   const nsControlPoints = [
     [
       new THREE.Vector4(-200, -200, 100, 1),
@@ -64,44 +71,55 @@ function init() {
   const knots2 = [0, 0, 0, 0, 1, 1, 1, 1];
   const nurbsSurface = new NURBSSurface(degree1, degree2, knots1, knots2, nsControlPoints);
 
-  const map = new THREE.TextureLoader().load('textures/uv_grid_opengl.jpg');
-  map.wrapS = map.wrapT = THREE.RepeatWrapping;
-  map.anisotropy = 16;
-  map.encoding = THREE.sRGBEncoding;
 
+//Funktion zur Berechnung der Oberflächenpunkte
   function getSurfacePoint(u, v, target) {
     return nurbsSurface.getPoint(u, v, target);
   }
 
   const geometry = new ParametricGeometry(getSurfacePoint, 10, 10);
+
+  //Material für die Oberfläche
   const material = new THREE.MeshLambertMaterial({ color: 0x0000ff, side: THREE.DoubleSide });
 const wireframeMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true });
 
+//Erstellen der 3D-Objektes und des Drahtgitterobjekts
 const object = new THREE.Mesh(geometry, material);
 const wireframe = new THREE.Mesh(geometry, wireframeMaterial);
 
+//Position und Skalierung des 3D-Objektes
 object.position.set(-200, 100, 0);
 object.scale.multiplyScalar(1);
 
+//Position und Skalierung des Drahtgitterobjekts
 wireframe.position.set(-200, 100, 0);
 wireframe.scale.multiplyScalar(1);
 
+//Hinzufügen von 3D-Objekt und Drahtgiitter zur Gruppe
 group.add(object);
 group.add(wireframe);
 
+//Renderer
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   container.appendChild(renderer.domElement);
-
-  stats = new Stats();
-  container.appendChild(stats.dom);
 
   container.style.touchAction = 'none';
   container.addEventListener('pointerdown', onPointerDown);
 
   window.addEventListener('resize', onWindowResize);
 }
+
+/*
+//OrbitControls für die Interaktion mit der Kamera
+controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.25;
+controls.rotateSpeed = 0.35;
+
+//Ereignislistener für Fenstergrößenänderungen
+*/
 
 function onWindowResize() {
   windowHalfX = window.innerWidth / 2;
