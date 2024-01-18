@@ -1,51 +1,72 @@
-// IMPORT MODULES
-import './style.css';
 import * as THREE from 'three';
-import NURBS from 'nurbs';
+import { NURBSSurface, MeshBasicMaterial, Mesh, PerspectiveCamera, Scene, WebGLRenderer } from 'three';
 
-// Erstelle eine Szene
-const scene = new THREE.Scene();
+const camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
+camera.position.set(50, 50, 100);
 
-// Erstelle eine Kamera
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.z = 5;
+const scene = new Scene();
 
-// Erstelle einen Renderer
-const renderer = new THREE.WebGLRenderer();
+const renderer = new WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Kontrollpunkte für eine einfache Fläche
+const knots1 = [0, 0, 1, 1];
+const knots2 = [0, 0, 1, 1];
 const controlPoints = [
-  [-1, -1, 0],
-  [-1, 1, 0],
-  [1, -1, 0],
-  [1, 1, 0]
+  [
+    new THREE.Vector4(-10, 0, 10, 1),
+    new THREE.Vector4(-10, 0, 0, 1),
+    new THREE.Vector4(-10, 0, -10, 1),
+  ],
+  [
+    new THREE.Vector4(0, 10, 10, 1),
+    new THREE.Vector4(0, 10, 0, 1),
+    new THREE.Vector4(0, 10, -10, 1),
+  ],
+  [
+    new THREE.Vector4(10, 0, 10, 1),
+    new THREE.Vector4(10, 0, 0, 1),
+    new THREE.Vector4(10, 0, -10, 1),
+  ],
 ];
 
-// Grad der Fläche
-const degree = 2;
+const nurbsSurface = new NURBSSurface(2, 2, knots1, knots2, controlPoints);
 
-// Erstelle eine NURBS-Fläche
-const nurbsSurface = new NURBS.Surface();
-nurbsSurface.degree = degree;
-nurbsSurface.controlPoints = controlPoints;
+const geometry = new THREE.Geometry();
 
-// Erzeuge eine Geometrie aus der NURBS-Fläche
-const nurbsGeometry = new THREE.ParametricBufferGeometry((u, v) => nurbsSurface.point(u, v), 20, 20);
+const numPointsU = 20;
+const numPointsV = 20;
 
-// Erzeuge ein Material
-const nurbsMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+for (let i = 0; i < numPointsU; i++) {
+  for (let j = 0; j < numPointsV; j++) {
+    const u = i / (numPointsU - 1);
+    const v = j / (numPointsV - 1);
 
-// Erzeuge ein Mesh und füge es zur Szene hinzu
-const nurbsMesh = new THREE.Mesh(nurbsGeometry, nurbsMaterial);
+    const point = nurbsSurface.getPoint(u, v, new THREE.Vector3());
+    geometry.vertices.push(point);
+  }
+}
+
+for (let i = 0; i < numPointsU - 1; i++) {
+  for (let j = 0; j < numPointsV - 1; j++) {
+    const a = i * numPointsV + j;
+    const b = (i + 1) * numPointsV + j;
+    const c = (i + 1) * numPointsV + j + 1;
+    const d = i * numPointsV + j + 1;
+
+    geometry.faces.push(new THREE.Face3(a, b, d));
+    geometry.faces.push(new THREE.Face3(b, c, d));
+  }
+}
+
+const nurbsMaterial = new MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+
+const nurbsMesh = new Mesh(geometry, nurbsMaterial);
 scene.add(nurbsMesh);
 
-// Animations-Loop
 function animate() {
   requestAnimationFrame(animate);
 
-  // Rotiere die NURBS-Oberfläche
   nurbsMesh.rotation.x += 0.01;
   nurbsMesh.rotation.y += 0.01;
 
