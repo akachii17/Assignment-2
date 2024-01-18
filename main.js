@@ -1,3 +1,72 @@
+// IMPORT MODULES
+import './style.css';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Create a scene
+var scene = new THREE.Scene();
+
+// Create a camera
+var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 5;
+
+// Create a renderer
+var renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Include NURBSUtils
+var nurbsUtils = THREE.NURBSUtils;
+
+// Create a Nurbs geometry
+var degree1 = 2; // degree in U direction
+var degree2 = 2; // degree in V direction
+var knots1 = [0, 0, 1, 1]; // define knots in U direction
+var knots2 = [0, 0, 1, 1]; // define knots in V direction
+var controlPoints = []; // define control points
+
+// ... populate controlPoints with Vector4 objects
+
+var nurbsSurface = new THREE.NURBSSurface(degree1, degree2, knots1, knots2, controlPoints);
+
+// Generate geometry
+var nurbsGeometry = new THREE.ParametricBufferGeometry(nurbsSurface, 20, 20);
+
+// Create a material
+var material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+
+// Create a mesh and add it to the scene
+var nurbsMesh = new THREE.Mesh(nurbsGeometry, material);
+scene.add(nurbsMesh);
+
+// Animation loop
+function animate() {
+  requestAnimationFrame(animate);
+
+  // Rotate the Nurbs surface
+  nurbsMesh.rotation.x += 0.01;
+  nurbsMesh.rotation.y += 0.01;
+
+  renderer.render(scene, camera);
+}
+
+animate();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
 
 // IMPORT MODULES
@@ -66,7 +135,7 @@ animate();
 
 
 
-
+/*
 
 // IMPORT MODULES
 import './style.css';
@@ -250,7 +319,7 @@ const animate = function () {
 // Start animation
 animate();
 
-
+*/
 
 
 
@@ -472,3 +541,5 @@ const animate = function () {
 
 animate();
  */
+
+
