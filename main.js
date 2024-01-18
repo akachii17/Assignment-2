@@ -1,49 +1,51 @@
 // IMPORT MODULES
 import './style.css';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import NURBS from 'nurbs';
 
-// Create a scene
-var scene = new THREE.Scene();
+// Erstelle eine Szene
+const scene = new THREE.Scene();
 
-// Create a camera
-var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+// Erstelle eine Kamera
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.z = 5;
 
-// Create a renderer
-var renderer = new THREE.WebGLRenderer();
+// Erstelle einen Renderer
+const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Include NURBSUtils
-var nurbsUtils = THREE.NURBSUtils;
+// Kontrollpunkte für eine einfache Fläche
+const controlPoints = [
+  [-1, -1, 0],
+  [-1, 1, 0],
+  [1, -1, 0],
+  [1, 1, 0]
+];
 
-// Create a Nurbs geometry
-var degree1 = 2; // degree in U direction
-var degree2 = 2; // degree in V direction
-var knots1 = [0, 0, 1, 1]; // define knots in U direction
-var knots2 = [0, 0, 1, 1]; // define knots in V direction
-var controlPoints = []; // define control points
+// Grad der Fläche
+const degree = 2;
 
-// ... populate controlPoints with Vector4 objects
+// Erstelle eine NURBS-Fläche
+const nurbsSurface = new NURBS.Surface();
+nurbsSurface.degree = degree;
+nurbsSurface.controlPoints = controlPoints;
 
-var nurbsSurface = new THREE.NURBSSurface(degree1, degree2, knots1, knots2, controlPoints);
+// Erzeuge eine Geometrie aus der NURBS-Fläche
+const nurbsGeometry = new THREE.ParametricBufferGeometry((u, v) => nurbsSurface.point(u, v), 20, 20);
 
-// Generate geometry
-var nurbsGeometry = new THREE.ParametricBufferGeometry(nurbsSurface, 20, 20);
+// Erzeuge ein Material
+const nurbsMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
 
-// Create a material
-var material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
-
-// Create a mesh and add it to the scene
-var nurbsMesh = new THREE.Mesh(nurbsGeometry, material);
+// Erzeuge ein Mesh und füge es zur Szene hinzu
+const nurbsMesh = new THREE.Mesh(nurbsGeometry, nurbsMaterial);
 scene.add(nurbsMesh);
 
-// Animation loop
+// Animations-Loop
 function animate() {
   requestAnimationFrame(animate);
 
-  // Rotate the Nurbs surface
+  // Rotiere die NURBS-Oberfläche
   nurbsMesh.rotation.x += 0.01;
   nurbsMesh.rotation.y += 0.01;
 
@@ -51,7 +53,6 @@ function animate() {
 }
 
 animate();
-
 
 
 
