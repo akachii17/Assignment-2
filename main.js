@@ -1,83 +1,77 @@
+import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r125/build/three.module.js';
+import { OrbitControls } from 'https://threejsfundamentals.org/threejs/resources/threejs/r125/examples/jsm/controls/OrbitControls.js';
 
-/*
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+// Erstellen Sie eine Szene
+const scene = new THREE.Scene();
 
-const DEG_TO_RAD = Math.PI / 180;
-let scene, camera;
+// Erstellen Sie eine Kamera
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 20;
 
-function main() {
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x222222);
+// Erstellen Sie ein WebGL-Renderer
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 150, 250);
-    camera.lookAt(0, 0, 0);
+// Erstellen Sie OrbitControls
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+controls.dampingFactor = 0.25;
+controls.screenSpacePanning = false;
+controls.maxPolarAngle = Math.PI / 2;
 
-    var renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(new THREE.Color(0x222222));
-    renderer.shadowMap.enabled = true;
+// Erstellen Sie eine SplineCurve für die erste Linie
+const curve1 = new THREE.SplineCurve([
+    new THREE.Vector2(-10, 0),
+    new THREE.Vector2(-5, 5),
+    new THREE.Vector2(0, 0),
+    new THREE.Vector2(5, -5),
+    new THREE.Vector2(10, 0)
+]);
 
-    var ambientLight = new THREE.AmbientLight(0xffffff);
-    ambientLight.intensity = 0.4;
+// Erstellen Sie eine SplineCurve für die zweite Linie (gleich wie die erste)
+const curve2 = new THREE.SplineCurve([
+    new THREE.Vector2(-10, 5), // Verschieben Sie die zweite Linie höher
+    new THREE.Vector2(-5, 10),
+    new THREE.Vector2(0, 5),
+    new THREE.Vector2(5, 0),
+    new THREE.Vector2(10, 5)
+]);
 
-    var directionalLight = new THREE.DirectionalLight(0xffffff);
-    directionalLight.position.set(0, 100, 100);
-    directionalLight.lookAt(scene.position);
-    directionalLight.intensity = 0.7;
-    directionalLight.castShadow = true;
-    directionalLight.shadow.radius = 2;
-    directionalLight.shadow.mapSize.width = 2048;
-    directionalLight.shadow.mapSize.height = 2048;
-    directionalLight.shadow.camera.top = 100;
-    directionalLight.shadow.camera.bottom = -100;
-    directionalLight.shadow.camera.left = -100;
-    directionalLight.shadow.camera.right = 100;
+const points1 = curve1.getPoints(5);
+const points2 = curve2.getPoints(5);
 
-    scene.add(ambientLight);
-    scene.add(directionalLight);
+const geometry1 = new THREE.BufferGeometry().setFromPoints(points1);
+const geometry2 = new THREE.BufferGeometry().setFromPoints(points2);
 
-    var floorGeometry = new THREE.PlaneGeometry(200, 200);
-    var floorMaterial = new THREE.MeshStandardMaterial({
-        color: 0xFFFFFF,
-        roughness: 0.4,
-        metalness: 0.0
-    });
+const material = new THREE.LineBasicMaterial({ color: 0xff0000 });
 
-    var floor = new THREE.Mesh(floorGeometry, floorMaterial);
-    floor.rotation.x = -90 * DEG_TO_RAD;
-    floor.receiveShadow = true;
-    scene.add(floor);
+// Erstellen Sie das Linienobjekt für die erste Linie
+const splineObject1 = new THREE.Line(geometry1, material);
+scene.add(splineObject1);
 
-    let controls = new OrbitControls(camera, renderer.domElement);
+// Erstellen Sie das Linienobjekt für die zweite Linie
+const splineObject2 = new THREE.Line(geometry2, material);
+scene.add(splineObject2);
 
-    document.body.appendChild(renderer.domElement);
+// Animations-Loop
+function animate() {
+    requestAnimationFrame(animate);
 
-    var curve = new THREE.ParametricBufferGeometry(function (u, v, target) {
-        var x = Math.cos(u) * 50;
-        var y = v * 50;
-        var z = Math.sin(u) * 50;
-        target.set(x, y, z);
-    }, 100, 10);
+    // Aktualisieren Sie OrbitControls
+    controls.update();
 
-    var curveMaterial = new THREE.MeshBasicMaterial({ color: 0xFF0000 });
-    var curveMesh = new THREE.Mesh(curve, curveMaterial);
-    scene.add(curveMesh);
-
-    function animate() {
-        requestAnimationFrame(animate);
-        renderer.render(scene, camera);
-    }
-
-    animate();
+    // Rendern Sie die Szene mit der Kamera
+    renderer.render(scene, camera);
 }
 
-window.onload = main;
-*/
+// Starten Sie die Animations-Loop
+animate();
+
+
 
 //Tiles
-
+/*
 
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.127.0/build/three.module.js";
 import {OrbitControls} from "https://cdn.jsdelivr.net/npm/three@0.127.0/examples/jsm/controls/OrbitControls.js";
@@ -153,8 +147,10 @@ function planeCurve(g, z){
   
 }
 
+*/
 
 /*
+
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
 import {OrbitControls} from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls";
 import { ImprovedNoise } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/math/ImprovedNoise.js';
@@ -250,8 +246,8 @@ scene.add(o);
 renderer.setAnimationLoop(() => {
   renderer.render(scene, camera);
 });
-*/
 
+*/
 
 
 
