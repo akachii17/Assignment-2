@@ -1,5 +1,5 @@
 
-
+/*
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
@@ -74,11 +74,11 @@ function main() {
 }
 
 window.onload = main;
-
+*/
 
 //Tiles
 
-/*
+
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.127.0/build/three.module.js";
 import {OrbitControls} from "https://cdn.jsdelivr.net/npm/three@0.127.0/examples/jsm/controls/OrbitControls.js";
 import {GUI} from "https://cdn.jsdelivr.net/npm/three@0.127.0/examples/jsm/libs/dat.gui.module.js";
@@ -152,7 +152,7 @@ function planeCurve(g, z){
   pos.needsUpdate = true;
   
 }
-*/
+
 
 /*
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
