@@ -1,3 +1,188 @@
+/*
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.127.0/build/three.module.js";
+import {OrbitControls} from "https://cdn.jsdelivr.net/npm/three@0.127.0/examples/jsm/controls/OrbitControls.js";
+import {GUI} from "https://cdn.jsdelivr.net/npm/three@0.127.0/examples/jsm/libs/dat.gui.module.js";
+
+let scene = new THREE.Scene();
+let camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 1, 1000);
+camera.position.set(0, 0, 20).setLength(15);
+let renderer = new THREE.WebGLRenderer({antialias: true});
+renderer.setSize(innerWidth, innerHeight);
+renderer.setClearColor(0x404040);
+document.body.appendChild(renderer.domElement);
+
+let controls = new OrbitControls(camera, renderer.domElement);
+
+let light = new THREE.PointLight();
+//scene.add(light, new THREE.AmbientLight(0xffffff, 0.5));
+
+
+let params ={
+	bendDepth: 5
+}
+
+let geom = new THREE.PlaneGeometry(10, 10, 10, 10);
+planeCurve(geom, params.bendDepth);
+let mat = new THREE.MeshBasicMaterial({
+	wireframe: true,
+});
+let o = new THREE.Mesh(geom, mat);
+scene.add(o)
+
+let gui = new GUI();
+gui.add(mat, "wireframe");
+gui.add(params, "bendDepth", 1, 20).name("bend depth").onChange(v => {
+	planeCurve(geom, v);
+})
+
+renderer.setAnimationLoop( _ => {
+	renderer.render(scene, camera);
+})
+
+function planeCurve(g, z){
+	
+  let p = g.parameters;
+  let hw = p.width * 0.5;
+  
+  let a = new THREE.Vector2(-hw, 0);
+  let b = new THREE.Vector2(0, z);
+  let c = new THREE.Vector2(hw, 0);
+  
+  let ab = new THREE.Vector2().subVectors(a, b);
+  let bc = new THREE.Vector2().subVectors(b, c);
+  let ac = new THREE.Vector2().subVectors(a, c);
+  
+  let r = (ab.length() * bc.length() * ac.length()) / (2 * Math.abs(ab.cross(ac)));
+  
+  let center = new THREE.Vector2(0, z - r);
+  let baseV = new THREE.Vector2().subVectors(a, center);
+  let baseAngle = baseV.angle() - (Math.PI * 0.8);
+  let arc = baseAngle * 2;
+  
+  let uv = g.attributes.uv;
+  let pos = g.attributes.position;
+  let mainV = new THREE.Vector2();
+  for (let i = 0; i < uv.count; i++){
+  	let uvRatio = 1 - uv.getX(i);
+    let y = pos.getY(i);
+    mainV.copy(c).rotateAround(center, (arc * uvRatio));
+    pos.setXYZ(i, mainV.x, y, -mainV.y);
+  }
+  
+  pos.needsUpdate = true;
+  
+}
+*/
+
+/*
+import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
+import {OrbitControls} from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls";
+import { ImprovedNoise } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/math/ImprovedNoise.js';
+
+console.clear();
+
+let perlin = new ImprovedNoise();
+
+let scene = new THREE.Scene();
+let camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 1, 1000);
+camera.position.set(10, 10, 10).setLength(100);
+let renderer = new THREE.WebGLRenderer({antialias: true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+window.addEventListener("resize", event => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+})
+
+let controls = new OrbitControls(camera, renderer.domElement);
+
+let light = new THREE.DirectionalLight(0xffffff, 0.75);
+light.position.setScalar(1);
+scene.add(light, new THREE.AmbientLight(0xffffff, 0.25));
+
+let g = new THREE.PlaneGeometry(100, 100, 100, 100);
+g.rotateX(-Math.PI * 0.5);
+let v2 = new THREE.Vector2();
+for(let i = 0; i < g.attributes.position.count;i++){
+  v2.fromBufferAttribute(g.attributes.uv, i).multiplyScalar(5);
+  let y = perlin.noise(v2.x, v2.y, 2.7) * 10;
+  g.attributes.position.setY(i, y)
+}
+g.computeVertexNormals();
+
+let gu = {
+  mouse: {value: new THREE.Vector3().setScalar(-9999)}
+}
+let m = new THREE.MeshLambertMaterial({
+  color: 0xFACE8D,
+  onBeforeCompile: shader => {
+    shader.uniforms.mouse = gu.mouse;
+    shader.vertexShader = `
+      varying vec3 vPos;
+      ${shader.vertexShader}
+    `.replace(
+      `#include <begin_vertex>`,
+      `#include <begin_vertex>
+        vPos = position;
+      `
+    );
+    //console.log(shader.vertexShader);
+    shader.fragmentShader = `
+      #define ss(a, b, c) smoothstep(a, b, c)
+      uniform vec3 mouse;
+      varying vec3 vPos;
+      ${shader.fragmentShader}
+    `.replace(
+      `#include <dithering_fragment>`,
+      `#include <dithering_fragment>
+      
+      // https://madebyevan.com/shaders/grid/
+        float cellSize = 10.;
+        vec2 coord = vPos.xz / cellSize;
+        
+        vec2 mouseCell = floor(mouse.xz / cellSize) + 0.5;
+        vec2 rect = abs(coord - mouseCell);
+        
+        float mf = float(abs(max(rect.x,rect.y)) < 0.5);
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0, 1, 1), mf);
+
+        vec2 grid = abs(fract(coord - 0.5) - 0.5) / fwidth(coord);
+        float line = min(grid.x, grid.y);
+
+        float color = 1.0 - min(line, 1.0);
+        
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1, 0, 0), color);
+        
+      `
+    );
+    console.log(shader.fragmentShader);
+  }
+})
+
+
+
+let o = new THREE.Mesh(g, m);
+scene.add(o);
+
+
+
+renderer.setAnimationLoop(() => {
+  renderer.render(scene, camera);
+});
+*/
+
+
+
+
+
+/*
+
+// Hinzufügen von OrbitControls für die Mausinteraktion
+const controls = new OrbitControls(camera, renderer.domElement);
+*/
+
+
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { NURBSSurface } from 'three/addons/curves/NURBSSurface.js';
@@ -80,7 +265,10 @@ function init() {
   const geometry = new ParametricGeometry(getSurfacePoint, 10, 10);
 
   //Material für die Oberfläche
-  const material = new THREE.MeshLambertMaterial({ color: 0x0000ff, side: THREE.DoubleSide });
+const material = new THREE.MeshLambertMaterial({ 
+  color: 0x0000ff, 
+  side: THREE.DoubleSide
+});
 const wireframeMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true });
 
 //Erstellen der 3D-Objektes und des Drahtgitterobjekts
@@ -99,6 +287,51 @@ wireframe.scale.multiplyScalar(1);
 group.add(object);
 group.add(wireframe);
 
+// Nach der Erstellung der NURBS-Oberfläche und vor dem Renderer
+
+// Gittermaterial erstellen
+const gridMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
+
+// Anzahl der Linien im Gitter
+const numLinesU = 10;
+const numLinesV = 10;
+
+// Linien für das Gitter erstellen
+const gridLines = new THREE.Group();
+
+// Gitterlinien in U-Richtung
+for (let i = 0; i <= numLinesU; i++) {
+  const u = i / numLinesU;
+  const points = [];
+  for (let j = 0; j <= numLinesV; j++) {
+    const v = j / numLinesV;
+    const point = new THREE.Vector3();
+    nurbsSurface.getPoint(u, v, point);
+    points.push(point);
+  }
+  const geometry = new THREE.BufferGeometry().setFromPoints(points);
+  const gridLine = new THREE.Line(geometry, gridMaterial);
+  gridLines.add(gridLine);
+}
+
+// Gitterlinien in V-Richtung
+for (let i = 0; i <= numLinesV; i++) {
+  const v = i / numLinesV;
+  const points = [];
+  for (let j = 0; j <= numLinesU; j++) {
+    const u = j / numLinesU;
+    const point = new THREE.Vector3();
+    nurbsSurface.getPoint(u, v, point);
+    points.push(point);
+  }
+  const geometry = new THREE.BufferGeometry().setFromPoints(points);
+  const gridLine = new THREE.Line(geometry, gridMaterial);
+  gridLines.add(gridLine);
+}
+
+// Hinzufügen des Gitters zur Szene
+scene.add(gridLines);
+
 //Renderer
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -111,16 +344,11 @@ group.add(wireframe);
   window.addEventListener('resize', onWindowResize);
 }
 
-/*
+
 //OrbitControls für die Interaktion mit der Kamera
-controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.25;
-controls.rotateSpeed = 0.35;
+const controls = new OrbitControls(camera, renderer.domElement);
 
 //Ereignislistener für Fenstergrößenänderungen
-*/
-
 function onWindowResize() {
   windowHalfX = window.innerWidth / 2;
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -161,9 +389,6 @@ function render() {
 }
 
 animate();
-
-
-
 
 
 
