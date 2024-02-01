@@ -1,3 +1,83 @@
+
+
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
+const DEG_TO_RAD = Math.PI / 180;
+let scene, camera;
+
+function main() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x222222);
+
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 150, 250);
+    camera.lookAt(0, 0, 0);
+
+    var renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(new THREE.Color(0x222222));
+    renderer.shadowMap.enabled = true;
+
+    var ambientLight = new THREE.AmbientLight(0xffffff);
+    ambientLight.intensity = 0.4;
+
+    var directionalLight = new THREE.DirectionalLight(0xffffff);
+    directionalLight.position.set(0, 100, 100);
+    directionalLight.lookAt(scene.position);
+    directionalLight.intensity = 0.7;
+    directionalLight.castShadow = true;
+    directionalLight.shadow.radius = 2;
+    directionalLight.shadow.mapSize.width = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
+    directionalLight.shadow.camera.top = 100;
+    directionalLight.shadow.camera.bottom = -100;
+    directionalLight.shadow.camera.left = -100;
+    directionalLight.shadow.camera.right = 100;
+
+    scene.add(ambientLight);
+    scene.add(directionalLight);
+
+    var floorGeometry = new THREE.PlaneGeometry(200, 200);
+    var floorMaterial = new THREE.MeshStandardMaterial({
+        color: 0xFFFFFF,
+        roughness: 0.4,
+        metalness: 0.0
+    });
+
+    var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -90 * DEG_TO_RAD;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    let controls = new OrbitControls(camera, renderer.domElement);
+
+    document.body.appendChild(renderer.domElement);
+
+    var curve = new THREE.ParametricBufferGeometry(function (u, v, target) {
+        var x = Math.cos(u) * 50;
+        var y = v * 50;
+        var z = Math.sin(u) * 50;
+        target.set(x, y, z);
+    }, 100, 10);
+
+    var curveMaterial = new THREE.MeshBasicMaterial({ color: 0xFF0000 });
+    var curveMesh = new THREE.Mesh(curve, curveMaterial);
+    scene.add(curveMesh);
+
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+
+    animate();
+}
+
+window.onload = main;
+
+
+//Tiles
+
 /*
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.127.0/build/three.module.js";
 import {OrbitControls} from "https://cdn.jsdelivr.net/npm/three@0.127.0/examples/jsm/controls/OrbitControls.js";
@@ -182,7 +262,9 @@ renderer.setAnimationLoop(() => {
 const controls = new OrbitControls(camera, renderer.domElement);
 */
 
+//NURBS Curve
 
+/*
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { NURBSSurface } from 'three/addons/curves/NURBSSurface.js';
@@ -287,50 +369,7 @@ wireframe.scale.multiplyScalar(1);
 group.add(object);
 group.add(wireframe);
 
-// Nach der Erstellung der NURBS-Oberfläche und vor dem Renderer
-
-// Gittermaterial erstellen
-const gridMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
-
-// Anzahl der Linien im Gitter
-const numLinesU = 10;
-const numLinesV = 10;
-
-// Linien für das Gitter erstellen
-const gridLines = new THREE.Group();
-
-// Gitterlinien in U-Richtung
-for (let i = 0; i <= numLinesU; i++) {
-  const u = i / numLinesU;
-  const points = [];
-  for (let j = 0; j <= numLinesV; j++) {
-    const v = j / numLinesV;
-    const point = new THREE.Vector3();
-    nurbsSurface.getPoint(u, v, point);
-    points.push(point);
-  }
-  const geometry = new THREE.BufferGeometry().setFromPoints(points);
-  const gridLine = new THREE.Line(geometry, gridMaterial);
-  gridLines.add(gridLine);
-}
-
-// Gitterlinien in V-Richtung
-for (let i = 0; i <= numLinesV; i++) {
-  const v = i / numLinesV;
-  const points = [];
-  for (let j = 0; j <= numLinesU; j++) {
-    const u = j / numLinesU;
-    const point = new THREE.Vector3();
-    nurbsSurface.getPoint(u, v, point);
-    points.push(point);
-  }
-  const geometry = new THREE.BufferGeometry().setFromPoints(points);
-  const gridLine = new THREE.Line(geometry, gridMaterial);
-  gridLines.add(gridLine);
-}
-
-// Hinzufügen des Gitters zur Szene
-scene.add(gridLines);
+/*
 
 //Renderer
   renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -394,7 +433,7 @@ animate();
 
 
 
-
+//NURBs Curve
 
 
 /*
